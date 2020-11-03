@@ -51,7 +51,7 @@ public class AesCbc128Cipher {
 
     } catch (Exception e) {
       //en cas d'erreur, afficher un message et retourner la chaine nulle comme résultat
-      System.out.println("[ERROR] Error while encrypting: " + e.toString() + "\n");
+      System.out.println("[ERROR] Error while encrypting: " + e.toString());
       return null;
     }
   }
@@ -75,7 +75,7 @@ public class AesCbc128Cipher {
     }
     catch (Exception e) {
       //en cas d'erreur, afficher un message et retourner la chaine nulle comme résultat
-      System.out.println("[ERROR] Error while decrypting: " + e.toString() + "\n");
+      System.out.println("[ERROR] Error while decrypting: " + e.toString());
       return null;
     }
   }
