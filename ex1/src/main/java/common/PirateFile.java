@@ -7,8 +7,10 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import javax.crypto.SecretKey;
@@ -26,6 +28,7 @@ public class PirateFile {
   private static final String KEY_IDENTIFIER = "PirateKey";
   private static final String IV_IDENTIFIER = "PirateIv";
   private static final String SEPARATOR = ",";
+  private static final String EXTENSIONS_SEPARATOR = "Ø";
 
   private String pirateFilePath;   //chemain vers le fichier pirate.txt
 
@@ -41,12 +44,25 @@ public class PirateFile {
     }
   }
 
-  public void savePirateParameters(SecretKey key, IvParameterSpec ivParameterSpec)
+  public void saveFileExtensions(List<String> extensions) throws IOException {
+    //préparation pour écrire dans le fichier pirate.txt
+    BufferedWriter pirateFileWriter = new BufferedWriter(new FileWriter(pirateFilePath, true));
+    String persistedExtensions = EXTENSIONS_IDENTIFIER + SEPARATOR + String.join(EXTENSIONS_SEPARATOR, extensions) + System.lineSeparator();
+    pirateFileWriter.append(persistedExtensions); //ajout au fichier existant
+    pirateFileWriter.close();
+  }
+
+  public List<String> readFileExtensions() throws FileNotFoundException {
+    String allExtensionsConcat = readParameterInternal(EXTENSIONS_IDENTIFIER);
+    return Arrays.asList(allExtensionsConcat.split(EXTENSIONS_SEPARATOR));
+  }
+
+  public void savePirateKeyAndIv(SecretKey key, IvParameterSpec ivParameterSpec)
       throws IOException {
     //préparation pour écrire dans le fichier pirate.txt
     BufferedWriter pirateFileWriter = new BufferedWriter(new FileWriter(pirateFilePath, true));
-    String encodedKey = KEY_IDENTIFIER + SEPARATOR + Base64.getEncoder().encodeToString(key.getEncoded()); //conversion de la clé en string, avec son identifiant comme prefix
-    String encodedIv = IV_IDENTIFIER + SEPARATOR + Base64.getEncoder().encodeToString(ivParameterSpec.getIV());//conversion du IV en string, avec son identifiant comme prefix
+    String encodedKey = KEY_IDENTIFIER + SEPARATOR + Base64.getEncoder().encodeToString(key.getEncoded()) + System.lineSeparator(); //conversion de la clé en string, avec son identifiant comme prefix
+    String encodedIv = IV_IDENTIFIER + SEPARATOR + Base64.getEncoder().encodeToString(ivParameterSpec.getIV()) + System.lineSeparator();//conversion du IV en string, avec son identifiant comme prefix
     pirateFileWriter.append(encodedKey); //ajout au fichier existant
     pirateFileWriter.append(encodedIv);//ajout au fichier existant
     pirateFileWriter.close();
@@ -61,33 +77,32 @@ public class PirateFile {
    *
    * il n'y aura jamais plus de ligne que cela
    */
-  public Map<SecretKey, IvParameterSpec> readPirateParameters()
+  public Map<SecretKey, IvParameterSpec> readPirateKeyAndIv()
       throws IOException {
-    //préparation pour lire le fichier pirate.txt
-    File pirateFile = new File(pirateFilePath);
-    if (!pirateFile.exists())
-      throw new NoPirateParametersException("pirate.txt does not exist");
 
-    Scanner fileScanner = new Scanner(pirateFile);
-
-    String keyFromFile = null;
-    String ivyFromFile = null;
-    while (fileScanner.hasNextLine()) {
-      String lineContent = fileScanner.nextLine();
-      if (lineContent.startsWith(KEY_IDENTIFIER)) {
-        keyFromFile = lineContent.split(SEPARATOR, 2)[1];
-      } else if (lineContent.startsWith(IV_IDENTIFIER)) {
-        ivyFromFile = lineContent.split(SEPARATOR, 2)[1];
-      }
-    }
-
-    if (keyFromFile == null || ivyFromFile == null)
-      throw new NoPirateParametersException("Key or iv could wer not found in pirate file.");
+    String keyFromFile = readParameterInternal(KEY_IDENTIFIER);
+    String ivyFromFile = readParameterInternal(IV_IDENTIFIER);
 
     SecretKey secretKey = reconstructSecretKey(keyFromFile);
     IvParameterSpec secretIv = reconstructIv(ivyFromFile);
 
     return Collections.singletonMap(secretKey, secretIv);
+  }
+
+  private String readParameterInternal(String parameterIdentifier) throws FileNotFoundException {
+    //préparation pour lire le fichier pirate.txt
+    File pirateFile = new File(pirateFilePath);
+    if (!pirateFile.exists())
+      throw new NoPirateParametersException("pirate.txt does not exist");
+    Scanner fileScanner = new Scanner(pirateFile);
+
+    while (fileScanner.hasNextLine()) {
+      String lineContent = fileScanner.nextLine();
+      if (lineContent.startsWith(parameterIdentifier)) {
+        return lineContent.split(SEPARATOR, 2)[1];
+      }
+    }
+    throw new NoPirateParametersException("parameter <" + parameterIdentifier + "> could not be found in pirate.txt");
   }
 
   /**

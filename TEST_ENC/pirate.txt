@@ -1,0 +1,3 @@
+PirateExt,txt
+PirateKey,416EiCGIkwYGSyl7xk1srQ==
+PirateIv,/PozdrndrTSSmSIav7nQaA==

@@ -8,7 +8,9 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -24,7 +26,7 @@ public class Main {
 
   private static String actionArg;
   private static String directoryArg;
-  private static String[] targetExtensionsArgs;
+  private static String[] targetExtensionsArgs = {};
 
   public static void main(String[] args) {
 
@@ -34,24 +36,32 @@ public class Main {
       Action action = getValidatedAction();
       List<String> extensions = getAllValidatedFileArgs();
       File workDirectory = FileSystemUtils.workDirectory(directoryArg);
+      PirateFile pirateFile = new PirateFile(workDirectory.getPath() + "/" + PIRATE_FILE_NAME);
 
-      PirateFile pirateFile = new PirateFile(workDirectory.getPath() + PIRATE_FILE_NAME);
+      if (action == Action.ENCRYPT && extensions.size() == 0)
+        throw new InvalidArgumentException("No file extensions were specified for encrypt mode");
+      if (action == Action.DECRYPT && extensions.size() == 0)
+        extensions = pirateFile.readFileExtensions();
+
+
       if (action == Action.ENCRYPT) {
         pirateFile.initializePirateFile(); //si on encrypt, il faut créer pirate.txt s'il n'existe pas ou bien vider son contenue s'il existe
+        pirateFile.saveFileExtensions(extensions);
       }
 
       AesCbc128Cipher cipher = new AesCbc128Cipher(pirateFile, PROGRAM_CHARSET);
       List<File> allFilesToManage = FileSystemUtils.allFilesToManage(workDirectory, extensions);
-      for (File file : allFilesToManage) {
+      for (File file : allFilesToManage.stream().filter(f -> !f.getName().contains(PIRATE_FILE_NAME)).collect(
+          Collectors.toList())) {
         String fileContent = FileSystemUtils.getFileContent(file, PROGRAM_CHARSET);
-        System.out.println("I want to perform action on : " + file.getPath());
+        System.out.println("I want to perform action on : " + file.getName());
 
         String newContent = "";
         if (action == Action.ENCRYPT) {
-          //newContent = cipher.encrypt(fileContent);
+          newContent = cipher.encrypt(fileContent);
           System.out.println("encrypting");
         } else {
-          //newContent = cipher.decrypt(fileContent);
+          newContent = cipher.decrypt(fileContent);
           System.out.println("decrypting");
         }
 
@@ -80,8 +90,8 @@ public class Main {
     options.addOption(action);
 
     Option extensions = new Option("f", "file", true, "specify which type of files to encrypt or decrypt");
-    action.setRequired(true);
-    options.addOption(action);
+    extensions.setRequired(false);
+    options.addOption(extensions);
 
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
@@ -95,7 +105,9 @@ public class Main {
 
     directoryArg = cmd.getOptionValue("d");
     actionArg = cmd.getOptionValue("op");
-    targetExtensionsArgs = cmd.getOptionValues("f");
+
+    String[] tempsExtensions = cmd.getOptionValues("f");
+    targetExtensionsArgs = tempsExtensions == null ? targetExtensionsArgs : tempsExtensions;
   }
 
 
@@ -124,7 +136,8 @@ public class Main {
     List<String> validExtensions = new ArrayList<>();
     for (String arg : targetExtensionsArgs) {
       FileExtension ext = getValidatedSingleFileArg(arg); //on vérifie que les extensions spécifées existent
-      validExtensions.add(ext.toRawExtension());
+      if (ext != null)
+        validExtensions.add(ext.toRawExtension());
     }
 
     return validExtensions;
@@ -135,8 +148,7 @@ public class Main {
       if (extension.toRawExtension().equals(arg))
         return extension;
     }
-
-    throw new InvalidArgumentException("Parameter <" + arg + "> is not valid for file extension.");
+    return null;
   }
 }
 
