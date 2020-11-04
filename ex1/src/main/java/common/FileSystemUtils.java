@@ -2,13 +2,18 @@ package common;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import org.apache.commons.io.FilenameUtils;
 
-public class DirectoryUtil {
+public class FileSystemUtils {
 
   private static final String CURRENT_DIRECTORY_PROPERTY = "user.dir";
 
@@ -24,7 +29,7 @@ public class DirectoryUtil {
 
     File specifiedFile = new File(directoryParameter);
     if (!specifiedFile.isDirectory()) {
-      System.out.println("Specified directory is not a directory");
+      System.out.println("Specified directory is not a directory. Using current directory instead.");
       return new File(currentPath);
     }
 
@@ -37,7 +42,37 @@ public class DirectoryUtil {
   public static List<File> allFilesToManage(File workDirectory, List<String> validExtensions) {
 
     ArrayList<File> filesToManage = new ArrayList<>();
-    List<File> subDirectories = allSubDirectories(workDirectory);
+    List<File> directories = allSubDirectories(workDirectory);
+    directories.add(workDirectory); //liste de tous les répertoires existant à partir de la racine, racine inclusivement
+
+    for (File directory : directories) {
+      //aller chercher tous les sous fichier dans le répertoire
+      File[] files = Objects.requireNonNull(directory.listFiles(new FileFilter() {
+        public boolean accept(File f) {
+          return !f.isDirectory();
+        }
+      })); //cette liste est immutable
+
+      for (File file : files)  { //on itère sur tous les fichers dans le répertoires qui ne sont pas des répertoires
+        String extension = FilenameUtils.getExtension(file.getPath()); //extraction de son extension
+        if (validExtensions.contains(extension)) {
+          filesToManage.add(file); //si l'extension est valide, on l'ajoute aux fichiers à encrypter/décrypter
+        }
+      }
+    }
+
+    return filesToManage;
+  }
+
+  public static String getFileContent(File targetFile, Charset encoding) throws IOException {
+    byte[] encoded = Files.readAllBytes(targetFile.toPath());
+    return new String(encoded, encoding);
+  }
+
+  public static void overwriteFileContent(File targetFile, String newContent)
+      throws IOException {
+    FileOutputStream fos = new FileOutputStream(targetFile, false);
+    fos.write(Base64.getDecoder().decode(newContent.getBytes()));
   }
 
   /**
