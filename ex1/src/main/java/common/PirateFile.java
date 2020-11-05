@@ -19,7 +19,17 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Classe qui encapsule les opérations de fichier à faire avec le fichier pirate.txt
- * Cette classe s'occupe d'écrire et d'extraire les paramètres pour l'encryption.
+ * Cette classe s'occupe d'écrire et d'extraire les paramètres pour l'encryption et la décryption.
+ *
+ * le contenus du fichier pirate va comme suite:
+ * ligne 1 : Les types de fichiers supportés, séparaés par des virgules
+ * ligne 2: la clé
+ * ligne 3: le Iv
+ *
+ * il n'y aura jamais plus de ligne que cela. Aussi, pour chaque ligne, un IDENTIFIER du contenus de la ligne
+ * est placé au début, suivit d'une virgule comme SEPARATOR. POur les extensions de fichiers, ceux-si sont séparés par
+ * le charactère Ø. Le programme peut ainsi facilement extraire l'info de pirate.txt, mais un être humain qui regarde vite
+ * ne sait pas qu'il s'agit des informations pour décrypter ses fichiers.
  * */
 public class PirateFile {
 
@@ -30,7 +40,7 @@ public class PirateFile {
   private static final String SEPARATOR = ",";
   private static final String EXTENSIONS_SEPARATOR = "Ø";
 
-  private String pirateFilePath;   //chemain vers le fichier pirate.txt
+  private final String pirateFilePath;   //chemain vers le fichier pirate.txt
 
   public PirateFile(String filePath) {
     this.pirateFilePath = filePath;
@@ -44,6 +54,9 @@ public class PirateFile {
     }
   }
 
+  /**
+   * Sauvegarde les extensions de fichier pour l'encryption courante.
+   * */
   public void saveFileExtensions(List<String> extensions) throws IOException {
     //préparation pour écrire dans le fichier pirate.txt
     BufferedWriter pirateFileWriter = new BufferedWriter(new FileWriter(pirateFilePath, true));
@@ -52,11 +65,17 @@ public class PirateFile {
     pirateFileWriter.close();
   }
 
+  /**
+   * Lit les extensions de fichier utilisés lors de la dernière encryption.
+   * */
   public List<String> readFileExtensions() throws FileNotFoundException {
     String allExtensionsConcat = readParameterInternal(EXTENSIONS_IDENTIFIER);
     return Arrays.asList(allExtensionsConcat.split(EXTENSIONS_SEPARATOR));
   }
 
+  /**
+   * sauvegarde la clef à la fin du ficheir pirate.txt sur sa propre ligne. Ensuite, sauvegarde le IV sur sa propre ligne.
+   * */
   public void savePirateKeyAndIv(SecretKey key, IvParameterSpec ivParameterSpec)
       throws IOException {
     //préparation pour écrire dans le fichier pirate.txt
@@ -70,12 +89,6 @@ public class PirateFile {
 
   /**
    * Permet de lire la clé et le iv dans le fichier pirate.txt
-   * le contenus du fichier pirate va comme suite:
-   * ligne 1 : Les types de fichiers supportés, séparaés par des virgules
-   * ligne 2: la clé
-   * ligne 3: le Iv
-   *
-   * il n'y aura jamais plus de ligne que cela
    */
   public Map<SecretKey, IvParameterSpec> readPirateKeyAndIv()
       throws IOException {

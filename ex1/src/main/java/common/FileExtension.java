@@ -1,5 +1,9 @@
 package common;
 
+/**
+ * Cette enum sert à storer les extensions de fichier acceptée dans des constantes. Le fait d'utiliser un enum
+ * assure une meilleur maintenabilité du code.
+ * */
 public enum FileExtension {
   XLS("xls"),
   DOC("doc"),
@@ -15,6 +19,9 @@ public enum FileExtension {
     this.ext = ext;
   }
 
+  /**
+   * Retourne l'extension correspondante sous forme de string.
+   * */
   public String toRawExtension() {
     return ext;
   }

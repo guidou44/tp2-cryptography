@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class FileSystemUtils {
@@ -18,7 +20,7 @@ public class FileSystemUtils {
   private static final String CURRENT_DIRECTORY_PROPERTY = "user.dir";
 
   /**
-   * Retourne le répertoire de travail pour l'encryption. Si le 'directoryParameter' spécifié est valide,
+   * Retourne le répertoire de travail pour l'encryption ou décryption. Si le 'directoryParameter' spécifié est valide,
    * le chemain de ce répertoire est retourné. Sinon le répertoire courant est retourné.
    * */
   public static File workDirectory(String directoryParameter) {
@@ -37,7 +39,7 @@ public class FileSystemUtils {
   }
 
   /**
-   * Retourne tous les  fichiers qu'il faut encrypter ou décrypter
+   * Retourne tous les  fichiers qu'il faut encrypter ou décrypter, incluant ceux dans les sous répertoires.
    * */
   public static List<File> allFilesToManage(File workDirectory, List<String> validExtensions) {
 
@@ -64,15 +66,19 @@ public class FileSystemUtils {
     return filesToManage;
   }
 
-  public static String getFileContent(File targetFile, Charset encoding) throws IOException {
-    byte[] encoded = Files.readAllBytes(targetFile.toPath());
-    return new String(encoded, encoding);
+  /**
+   * Retourne le contenus du fichier 'targetFile' sous forme de vecteur de  bytes
+   * */
+  public static byte[] getFileContent(File targetFile) throws IOException {
+    return Files.readAllBytes(targetFile.toPath());
   }
 
-  public static void overwriteFileContent(File targetFile, String newContent)
+  /**
+   * Remplace le contenus du fichier 'targetFile' par le nouveau contenus
+   * */
+  public static void overwriteFileContent(File targetFile, byte[] newContent)
       throws IOException {
-    FileOutputStream fos = new FileOutputStream(targetFile, false);
-    fos.write(Base64.getDecoder().decode(newContent.getBytes()));
+    FileUtils.writeByteArrayToFile(targetFile, newContent, false);
   }
 
   /**
