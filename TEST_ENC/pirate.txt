@@ -1,3 +1,3 @@
-PirateExt,pdfØtxtØpngØdocØaviØxlsØmp3
-PirateKey,C6DPulPme391bYRIjo63MQ==
-PirateIv,+i2DlBilqs9ZuWSATsMksA==
+PirateExt,txt
+PirateKey,jnSyvo5gOUlMfzmWuJnQWw==
+PirateIv,sgCnbIqS05BlDMg/DhFtOQ==

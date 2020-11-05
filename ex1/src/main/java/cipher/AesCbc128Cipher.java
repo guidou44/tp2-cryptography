@@ -93,7 +93,7 @@ public class AesCbc128Cipher {
   private IvParameterSpec generateInitialisationVector() {
 
     SecureRandom random = new SecureRandom();    //Créer une instance d'un générateur aléatoire sécuritaire
-    byte[] iv0 = random.generateSeed(16);    //générer iv aléatoirement de 16 octes
+    byte[] iv0 = random.generateSeed(16);    //générer iv aléatoirement de 16 octets
     return new IvParameterSpec(iv0);
   }
 
