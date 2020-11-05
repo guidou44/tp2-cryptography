@@ -85,13 +85,13 @@ public class Main {
         if (credOfInterest.isPresent()) {
             Credential credential = credOfInterest.get();
             if (decryptUser) {
-                String clearUser = cipher.decrypt(credential.getUser(), password);
+                String clearUser = cipher.decrypt(credential.getUser(), externalPassword);
                 credential.setUser(clearUser);
             } else {
                 credential.setPassword(HIDDEN);
             }
             if (decryptPassword) {
-                String clearPassword = cipher.decrypt(credential.getPassword(), password);
+                String clearPassword = cipher.decrypt(credential.getPassword(), externalPassword);
                 credential.setPassword(clearPassword);
             } else {
                 credential.setPassword(HIDDEN);

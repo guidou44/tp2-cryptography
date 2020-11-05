@@ -28,7 +28,7 @@ public class CredentialPrinter {
     }
 
     private static void printHeaders() {
-        System.out.println(LINE_HEADER + COLUMN_SPACE + URL_HEADER + COLUMN_SPACE +
+        System.out.println(LINE_HEADER + COLUMN_SPACE + URL_HEADER + COLUMN_SPACE + COLUMN_SPACE +
                 USER_HEADER + COLUMN_SPACE + PASSWORD_HEADER);
     }
 }

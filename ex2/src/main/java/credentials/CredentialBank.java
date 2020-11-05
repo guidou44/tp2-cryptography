@@ -66,6 +66,8 @@ public class CredentialBank {
         try (Reader reader = new FileReader(credentialsFile)) {
             Type credentialListType = new TypeToken<ArrayList<Credential>>(){}.getType(); //on veut les credentials dans une liste.
             List<Credential> credentials = serializer.fromJson(reader, credentialListType);
+            if (credentials == null)
+                return new ArrayList<>();
             credentials.sort(Comparator.comparingInt(Credential::getId)); //on veut que les credentials soient ordonnées pour faciliter l'affichage ou attribuer le prochain id.
             return credentials;
         }
